@@ -1,54 +1,33 @@
 import 'dotenv/config';
-import nodemailer from 'nodemailer';
+import { TransactionalEmailsApi, SendSmtpEmail } from '@getbrevo/brevo';
 
-// Create transporter with explicit port configuration
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false // For development, remove in production
-  }
-});
+const apiInstance = new TransactionalEmailsApi();
+apiInstance.setApiKey(0, process.env.BREVO_API_KEY);
 
-// Rest of your code stays the same...
-
-// Verify connection
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('❌ Gmail configuration error:', error);
-  } else {
-    console.log('✅ Gmail configured and ready to send emails');
-  }
-});
+console.log('✅ Brevo configured');
 
 export const sendOTPEmail = async (email, otp) => {
   try {
-    const mailOptions = {
-      from: `"Whiteboard App" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: 'Your OTP for Whiteboard Login',
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2 style="color: #333;">Login Verification</h2>
-          <p>Your OTP code is:</p>
-          <h1 style="color: #4F46E5; font-size: 32px; letter-spacing: 5px;">${otp}</h1>
-          <p style="color: #666;">This OTP will expire in 10 minutes.</p>
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-          <p style="color: #999; font-size: 12px;">If you didn't request this, please ignore this email.</p>
-        </div>
-      `
-    };
+    const sendSmtpEmail = new SendSmtpEmail();
+    sendSmtpEmail.subject = "Your OTP for Whiteboard Login";
+    sendSmtpEmail.htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #333;">Login Verification</h2>
+        <p>Your OTP code is:</p>
+        <h1 style="color: #4F46E5; font-size: 32px; letter-spacing: 5px;">${otp}</h1>
+        <p style="color: #666;">This OTP will expire in 10 minutes.</p>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+        <p style="color: #999; font-size: 12px;">If you didn't request this, please ignore this email.</p>
+      </div>
+    `;
+    sendSmtpEmail.sender = { name: "Whiteboard App", email: "noreply@yourapp.com" };
+    sendSmtpEmail.to = [{ email: email }];
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent successfully:', info.messageId);
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('✅ Email sent successfully:', data.messageId);
     return true;
   } catch (error) {
-    console.error('❌ Email Error:', error.message);
+    console.error('❌ Email Error:', error);
     return false;
   }
 };
