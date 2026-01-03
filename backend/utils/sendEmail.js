@@ -1,15 +1,29 @@
 import 'dotenv/config';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
+  }
+});
 
-console.log('✅ Resend configured');
+// Verify connection
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ Gmail configuration error:', error);
+  } else {
+    console.log('✅ Gmail configured and ready to send emails');
+  }
+});
 
 export const sendOTPEmail = async (email, otp) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: [email],
+    const mailOptions = {
+      from: `"Whiteboard App" <${process.env.GMAIL_USER}>`,
+      to: email,
       subject: 'Your OTP for Whiteboard Login',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
@@ -21,14 +35,10 @@ export const sendOTPEmail = async (email, otp) => {
           <p style="color: #999; font-size: 12px;">If you didn't request this, please ignore this email.</p>
         </div>
       `
-    });
+    };
 
-    if (error) {
-      console.error('❌ Resend Error:', error);
-      return false;
-    }
-
-    console.log('✅ Email sent successfully:', data);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent successfully:', info.messageId);
     return true;
   } catch (error) {
     console.error('❌ Email Error:', error.message);
