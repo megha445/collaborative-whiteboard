@@ -188,7 +188,7 @@ collaborative-whiteboard/
 | MONGO_URI | MongoDB connection string | mongodb://localhost:27017/whiteboard |
 | JWT_SECRET | Secret key for JWT | your_secret_key |
 | EMAIL_USER | Gmail address | your_email@gmail.com |
-| EMAIL_PASS | Gmail app password | abcd efgh ijkl mnop |
+| EMAIL_PASS | Gmail app password | your_app_password |
 | CLIENT_URL | Frontend URL | http://localhost:5173 |
 
 ### Frontend `.env`
@@ -221,7 +221,15 @@ collaborative-whiteboard/
 
 ---
 
+## 🙏 Acknowledgments
+
+- Socket.io for real-time communication
+- MongoDB for database
+- React team for amazing UI library
+- TailwindCSS for styling
+
 ---
+
 ## 👨‍💻 Author
 
 **Megha shyam**
@@ -231,11 +239,3 @@ collaborative-whiteboard/
 
 ---
 
-## 🙏 Acknowledgments
-
-- Socket.io for real-time communication
-- MongoDB for database
-- React team for amazing UI library
-- TailwindCSS for styling
-
----
