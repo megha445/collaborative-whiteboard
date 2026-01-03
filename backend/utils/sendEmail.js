@@ -1,31 +1,34 @@
 import 'dotenv/config';
 import nodemailer from 'nodemailer';
 
-// Verify environment variables are loaded
 console.log('Email User:', process.env.EMAIL_USER);
 console.log('Email Pass Length:', process.env.EMAIL_PASS?.length);
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // Use TLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
-
-// Add transporter verification
+// Verify connection
 transporter.verify(function(error, success) {
   if (error) {
     console.log('SMTP Connection Error:', error);
   } else {
-    console.log('SMTP Server is ready to send emails');
+    console.log('✅ SMTP Server is ready to send emails');
   }
 });
 
 export const sendOTPEmail = async (email, otp) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"Whiteboard App" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Your OTP for Whiteboard Login',
     html: `
@@ -37,14 +40,10 @@ export const sendOTPEmail = async (email, otp) => {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
+    console.log('✅ Email sent:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Email Error Details:', {
-      message: error.message,
-      code: error.code,
-      command: error.command
-    });
+    console.error('❌ Email Error:', error.message);
     return false;
   }
 };
