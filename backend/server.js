@@ -43,7 +43,4 @@ handleSocketConnection(io);
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log("EMAIL =", process.env.EMAIL_USER);
-console.log("PASS LENGTH =", process.env.EMAIL_PASS?.length);
-
 });
