@@ -1,46 +1,29 @@
 import 'dotenv/config';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-console.log('Email User:', process.env.EMAIL_USER);
-console.log('Email Pass Length:', process.env.EMAIL_PASS?.length);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // Use TLS
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
-
-// Verify connection
-transporter.verify(function(error, success) {
-  if (error) {
-    console.log('SMTP Connection Error:', error);
-  } else {
-    console.log('✅ SMTP Server is ready to send emails');
-  }
-});
+console.log('Resend configured');
 
 export const sendOTPEmail = async (email, otp) => {
-  const mailOptions = {
-    from: `"Whiteboard App" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: 'Your OTP for Whiteboard Login',
-    html: `
-      <h2>Login Verification</h2>
-      <p>Your OTP is: <strong>${otp}</strong></p>
-      <p>This OTP will expire in 10 minutes.</p>
-    `
-  };
-
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent:', info.messageId);
+    const { data, error } = await resend.emails.send({
+      from: `Whiteboard <${process.env.EMAIL_USER}>`,
+      to: [email],
+      subject: 'Your OTP for Whiteboard Login',
+      html: `
+        <h2>Login Verification</h2>
+        <p>Your OTP is: <strong>${otp}</strong></p>
+        <p>This OTP will expire in 10 minutes.</p>
+      `
+    });
+
+    if (error) {
+      console.error('❌ Resend Error:', error);
+      return false;
+    }
+
+    console.log('✅ Email sent:', data);
     return true;
   } catch (error) {
     console.error('❌ Email Error:', error.message);
