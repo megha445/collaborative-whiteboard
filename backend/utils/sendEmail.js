@@ -20,7 +20,7 @@ export const sendOTPEmail = async (email, otp) => {
         <p style="color: #999; font-size: 12px;">If you didn't request this, please ignore this email.</p>
       </div>
     `;
-    sendSmtpEmail.sender = { name: "Whiteboard App", email: "vattamvenkatasaimeghashyamredd@gmail.com" };
+    sendSmtpEmail.sender = { name: "Whiteboard App", email: "hshananzjawj@gmail.com" };
     sendSmtpEmail.to = [{ email: email }];
 
     const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
