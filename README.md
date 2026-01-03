@@ -51,7 +51,7 @@ A full-stack real-time collaborative whiteboard application where multiple users
 ### Prerequisites
 - Node.js v14 or higher
 - MongoDB (local or MongoDB Atlas)
-- Gmail account (for OTP emails)
+- Brevo account (for OTP emails)
 
 ### Step 1: Clone Repository
 ```bash
@@ -75,12 +75,13 @@ EMAIL_PASS=your_gmail_app_password
 CLIENT_URL=http://localhost:5173
 ```
 
-**Gmail App Password Setup:**
-1. Go to [Google Account Security](https://myaccount.google.com/security)
-2. Enable **2-Step Verification**
-3. Search for **App Passwords**
-4. Generate new password for "Mail"
-5. Copy the 16-character password to `EMAIL_PASS`
+**Brevo Setup:**
+1. Sign up at [brevo.com](https://www.brevo.com)
+2. Go to **Settings** → **SMTP & API**
+3. Click **"Create a new API key"**
+4. Copy the API key to `BREVO_API_KEY`
+5. Go to **Senders** and verify your email address
+
 
 Start backend:
 ```bash
@@ -187,8 +188,7 @@ collaborative-whiteboard/
 | PORT | Server port | 5000 |
 | MONGO_URI | MongoDB connection string | mongodb://localhost:27017/whiteboard |
 | JWT_SECRET | Secret key for JWT | your_secret_key |
-| EMAIL_USER | Gmail address | your_email@gmail.com |
-| EMAIL_PASS | Gmail app password | your_app_password |
+| BREVO_API_KEY | Brevo API key for emails | xkeysib-xxxxx |
 | CLIENT_URL | Frontend URL | http://localhost:5173 |
 
 ### Frontend `.env`
@@ -203,8 +203,8 @@ collaborative-whiteboard/
 
 **Problem: OTP not received**
 - Check spam/junk folder
-- Verify Gmail app password is correct
-- Ensure 2-Step Verification is enabled
+- Verify Brevo key  is correct
+- Ensure sender email is verified in Brevo dashboard
 
 **Problem: Socket connection failed**
 - Check if backend is running on port 5000
@@ -218,6 +218,21 @@ collaborative-whiteboard/
 **Problem: Cursor lag**
 - Cursor updates at 60fps (optimized)
 - Check internet connection
+
+---
+
+### 🚨 Email OTP Service Issues
+
+The application currently experiences problems with email-based OTP delivery. Below are the known issues:
+
+#### **Issue 1: Email Service Configuration Errors**
+
+**Problems encountered:**
+- ❌ **Nodemailer with Gmail**: Connection timeout errors on cloud hosting platforms (Render, Heroku)
+```
+  Error: Connection timeout (ETIMEDOUT)
+  Code: ETIMEDOUT, Command: CONN
+```
 
 ---
 
