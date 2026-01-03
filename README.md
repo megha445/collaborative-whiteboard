@@ -236,6 +236,3 @@ collaborative-whiteboard/
 
 - GitHub: [@megha445](https://github.com/megha445)
 - Email: vattamvenkatasaimeghashyamredd@gmail.com
-
----
-
