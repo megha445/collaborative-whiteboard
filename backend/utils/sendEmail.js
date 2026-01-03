@@ -8,7 +8,7 @@ console.log('✅ Resend configured');
 export const sendOTPEmail = async (email, otp) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Whiteboard App <onboarding@resend.dev>',
+      from: 'onboarding@resend.dev',
       to: [email],
       subject: 'Your OTP for Whiteboard Login',
       html: `
