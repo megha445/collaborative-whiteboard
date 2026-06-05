@@ -4,6 +4,42 @@ import { verifyToken } from '../utils/jwt.js';
 
 // Track active connections globally to prevent duplicates
 const activeConnections = new Map(); // userId+roomId -> socketId
+const pendingCanvasData = new Map(); // roomId -> line segments waiting to be saved
+const FLUSH_INTERVAL_MS = 1000;
+
+const queueCanvasSegment = (roomId, segment) => {
+  const roomKey = roomId.toString();
+  const pendingSegments = pendingCanvasData.get(roomKey) || [];
+  pendingSegments.push(segment);
+  pendingCanvasData.set(roomKey, pendingSegments);
+};
+
+const flushCanvasData = async (roomId = null) => {
+  const entries = roomId
+    ? [[roomId.toString(), pendingCanvasData.get(roomId.toString()) || []]]
+    : Array.from(pendingCanvasData.entries());
+
+  for (const [roomKey, segments] of entries) {
+    if (!segments.length) continue;
+
+    pendingCanvasData.delete(roomKey);
+
+    try {
+      await Room.updateOne(
+        { _id: roomKey },
+        { $push: { canvasData: { $each: segments } } }
+      );
+    } catch (error) {
+      const existingSegments = pendingCanvasData.get(roomKey) || [];
+      pendingCanvasData.set(roomKey, [...segments, ...existingSegments]);
+      console.error('❌ Canvas flush error:', error);
+    }
+  }
+};
+
+setInterval(() => {
+  flushCanvasData();
+}, FLUSH_INTERVAL_MS);
 
 export const handleSocketConnection = (io) => {
   io.on('connection', (socket) => {
@@ -77,12 +113,14 @@ export const handleSocketConnection = (io) => {
 
         console.log(`✅ ${user.name} joined room ${roomId} | Active users in DB: ${room.activeUsers.length}`);
 
-        // Send canvas state to the joining user only
-        socket.emit('canvas-state', room.canvasData);
+        await flushCanvasData(roomId);
 
         // Get and broadcast updated user list
         const updatedRoom = await Room.findById(roomId).populate('activeUsers', 'name email');
         const activeUsersList = updatedRoom.activeUsers || [];
+
+        // Send canvas state to the joining user only
+        socket.emit('canvas-state', updatedRoom.canvasData);
         
         console.log(`📤 Broadcasting ${activeUsersList.length} users to room ${roomId}`);
         io.to(roomId).emit('room-users', activeUsersList);
@@ -122,16 +160,11 @@ export const handleSocketConnection = (io) => {
       });
     });
 
-    socket.on('draw', async (data) => {
+    socket.on('draw', (data) => {
       try {
         const { roomId, from, to, color, tool, size } = data;
 
-        const room = await Room.findById(roomId);
-        if (room) {
-          room.canvasData.push({ from, to, color, tool, size });
-          await room.save();
-        }
-
+        queueCanvasSegment(roomId, { from, to, color, tool, size });
         socket.to(roomId).emit('drawing', { from, to, color, tool, size });
       } catch (error) {
         console.error('❌ Draw error:', error);
@@ -140,6 +173,7 @@ export const handleSocketConnection = (io) => {
 
     socket.on('clear-canvas', async ({ roomId }) => {
       try {
+        pendingCanvasData.delete(roomId.toString());
         const room = await Room.findById(roomId);
         if (room) {
           room.canvasData = [];

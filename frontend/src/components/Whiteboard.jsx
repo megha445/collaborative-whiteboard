@@ -6,6 +6,8 @@ import Toolbar from './Toolbar';
 import OnlineUsers from './OnlineUsers';
 import { toast } from 'react-toastify';
 
+const CANVAS_HEIGHT = 600;
+
 const Whiteboard = () => {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -19,17 +21,37 @@ const Whiteboard = () => {
   const lastPointRef = useRef(null);
   const hasJoinedRef = useRef(false);
   const lastEmitTime = useRef(0);
+  const cursorFrameRef = useRef(null);
+  const pendingCursorPositionRef = useRef(null);
   const { roomId } = useParams();
   const { token, user } = useAuth();
   const { socket } = useSocket();
   const navigate = useNavigate();
+
+  function drawLine(ctx, from, to, color, tool, size = 2) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = tool === 'eraser' ? size : size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (tool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = canvas.parentElement;
     const rect = container.getBoundingClientRect();
     canvas.width = rect.width;
-    canvas.height = 600;
+    canvas.height = CANVAS_HEIGHT;
   }, []);
 
   useEffect(() => {
@@ -83,9 +105,15 @@ const Whiteboard = () => {
     });
 
     socket.on('cursor-position', ({ userId, userName, x, y }) => {
+      const canvasWidth = canvasRef.current?.width || 1;
+
       setOtherCursors(prev => ({
         ...prev,
-        [userId]: { x, y, userName }
+        [userId]: {
+          left: (x / canvasWidth) * 100,
+          top: (y / CANVAS_HEIGHT) * 100,
+          userName
+        }
       }));
     });
 
@@ -114,27 +142,11 @@ const Whiteboard = () => {
       socket.off('cursor-position');
       socket.off('cursor-hidden');
       socket.off('error');
+      cancelAnimationFrame(cursorFrameRef.current);
+      cursorFrameRef.current = null;
       hasJoinedRef.current = false;
     };
   }, [socket, roomId, token]);
-
-  const drawLine = (ctx, from, to, color, tool, size = 2) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = tool === 'eraser' ? size : size;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    if (tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-    } else {
-      ctx.globalCompositeOperation = 'source-over';
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.stroke();
-  };
 
   const getCanvasCoordinates = (e) => {
     const canvas = canvasRef.current;
@@ -152,9 +164,26 @@ const Whiteboard = () => {
     lastPointRef.current = coords;
   };
 
+  const updateCursorPosition = (coords) => {
+    const canvasWidth = canvasRef.current?.width || 1;
+
+    pendingCursorPositionRef.current = {
+      ...coords,
+      left: (coords.x / canvasWidth) * 100,
+      top: (coords.y / CANVAS_HEIGHT) * 100
+    };
+
+    if (cursorFrameRef.current) return;
+
+    cursorFrameRef.current = requestAnimationFrame(() => {
+      setCursorPosition(pendingCursorPositionRef.current);
+      cursorFrameRef.current = null;
+    });
+  };
+
   const draw = (e) => {
     const coords = getCanvasCoordinates(e);
-    setCursorPosition(coords);
+    updateCursorPosition(coords);
 
     // Emit cursor position at 60fps (every ~16ms)
     const now = Date.now();
@@ -276,8 +305,8 @@ const Whiteboard = () => {
               <div
                 className="absolute pointer-events-none z-10 transition-transform duration-75"
                 style={{
-                  left: `${(cursorPosition.x / canvasRef.current?.width) * 100}%`,
-                  top: `${(cursorPosition.y / 600) * 100}%`,
+                  left: `${cursorPosition.left || 0}%`,
+                  top: `${cursorPosition.top || 0}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
               >
@@ -305,8 +334,8 @@ const Whiteboard = () => {
                 key={userId}
                 className="absolute pointer-events-none z-10 transition-transform duration-75"
                 style={{
-                  left: `${(cursor.x / canvasRef.current?.width) * 100}%`,
-                  top: `${(cursor.y / 600) * 100}%`,
+                  left: `${cursor.left}%`,
+                  top: `${cursor.top}%`,
                   transform: 'translate(-50%, -50%)'
                 }}
               >
