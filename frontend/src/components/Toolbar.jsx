@@ -1,4 +1,4 @@
-const Toolbar = ({ selectedTool, setSelectedTool, selectedColor, setSelectedColor, brushSize, setBrushSize, onClear, onDownload }) => {
+const Toolbar = ({ selectedTool, setSelectedTool, selectedColor, setSelectedColor, brushSize, setBrushSize, onClear, onDownload, canClear }) => {
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF'];
 
   return (
@@ -83,12 +83,14 @@ const Toolbar = ({ selectedTool, setSelectedTool, selectedColor, setSelectedColo
           >
             💾 Download
           </button>
-          <button
-            onClick={onClear}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition"
-          >
-            🗑️ Clear
-          </button>
+          {canClear && (
+            <button
+              onClick={onClear}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition"
+            >
+              🗑️ Clear
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ const Whiteboard = () => {
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [showCursor, setShowCursor] = useState(false);
   const [otherCursors, setOtherCursors] = useState({});
+  const [canClear, setCanClear] = useState(false);
   const lastPointRef = useRef(null);
   const hasJoinedRef = useRef(false);
   const lastEmitTime = useRef(0);
@@ -91,6 +92,10 @@ const Whiteboard = () => {
       setOnlineUsers(users);
     });
 
+    socket.on('room-permissions', ({ canClear }) => {
+      setCanClear(Boolean(canClear));
+    });
+
     socket.on('user-joined', ({ userName }) => {
       toast.info(`${userName} joined`, { position: 'bottom-right', autoClose: 2000 });
     });
@@ -137,6 +142,7 @@ const Whiteboard = () => {
       socket.off('drawing');
       socket.off('canvas-cleared');
       socket.off('room-users');
+      socket.off('room-permissions');
       socket.off('user-joined');
       socket.off('user-left');
       socket.off('cursor-position');
@@ -144,6 +150,7 @@ const Whiteboard = () => {
       socket.off('error');
       cancelAnimationFrame(cursorFrameRef.current);
       cursorFrameRef.current = null;
+      setCanClear(false);
       hasJoinedRef.current = false;
     };
   }, [socket, roomId, token]);
@@ -286,6 +293,7 @@ const Whiteboard = () => {
             setBrushSize={setBrushSize}
             onClear={handleClear}
             onDownload={handleDownload}
+            canClear={canClear}
           />
           
           <div className="relative">

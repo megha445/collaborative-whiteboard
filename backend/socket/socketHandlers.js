@@ -121,6 +121,9 @@ export const handleSocketConnection = (io) => {
 
         // Send canvas state to the joining user only
         socket.emit('canvas-state', updatedRoom.canvasData);
+        socket.emit('room-permissions', {
+          canClear: updatedRoom.createdBy.toString() === decoded.id.toString()
+        });
         
         console.log(`📤 Broadcasting ${activeUsersList.length} users to room ${roomId}`);
         io.to(roomId).emit('room-users', activeUsersList);
@@ -173,12 +176,20 @@ export const handleSocketConnection = (io) => {
 
     socket.on('clear-canvas', async ({ roomId }) => {
       try {
-        pendingCanvasData.delete(roomId.toString());
         const room = await Room.findById(roomId);
-        if (room) {
-          room.canvasData = [];
-          await room.save();
+        if (!room) {
+          socket.emit('error', { message: 'Room not found' });
+          return;
         }
+
+        if (room.createdBy.toString() !== socket.userId?.toString()) {
+          socket.emit('error', { message: 'Only the room creator can clear this board' });
+          return;
+        }
+
+        pendingCanvasData.delete(roomId.toString());
+        room.canvasData = [];
+        await room.save();
         io.to(roomId).emit('canvas-cleared');
       } catch (error) {
         console.error('❌ Clear canvas error:', error);
