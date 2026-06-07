@@ -1,0 +1,35 @@
+name: Deploy to Render
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Trigger Render deploy hooks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Trigger backend deploy
+        env:
+          RENDER_BACKEND_DEPLOY_HOOK_URL: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_BACKEND_DEPLOY_HOOK_URL" ]; then
+            echo "Backend deploy hook secret is not set; skipping backend deploy."
+          else
+            curl --fail --request POST "$RENDER_BACKEND_DEPLOY_HOOK_URL"
+          fi
+
+      - name: Trigger frontend deploy
+        env:
+          RENDER_FRONTEND_DEPLOY_HOOK_URL: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_FRONTEND_DEPLOY_HOOK_URL" ]; then
+            echo "Frontend deploy hook secret is not set; skipping frontend deploy."
+          else
+            curl --fail --request POST "$RENDER_FRONTEND_DEPLOY_HOOK_URL"
+          fi

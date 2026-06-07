@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 const RoomCard = ({ room, onRoomDeleted }) => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);

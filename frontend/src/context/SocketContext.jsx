@@ -1,15 +1,11 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { initSocket, connectSocket, disconnectSocket } from '../services/socket';
-
-const SocketContext = createContext();
+import { SocketContext } from './socket-context';
 
 export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
+  const socket = useMemo(() => initSocket(), []);
 
   useEffect(() => {
-    const socketInstance = initSocket();
-    setSocket(socketInstance);
-
     return () => {
       disconnectSocket();
     };
@@ -20,12 +16,4 @@ export const SocketProvider = ({ children }) => {
       {children}
     </SocketContext.Provider>
   );
-};
-
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocket must be used within SocketProvider');
-  }
-  return context;
 };

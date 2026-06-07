@@ -6,6 +6,7 @@ A full-stack real-time collaborative whiteboard application where multiple users
 ![React](https://img.shields.io/badge/React-18.x-blue)
 ![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-brightgreen)
 ![Socket.io](https://img.shields.io/badge/Socket.io-4.x-black)
+[![CI](https://github.com/megha445/collaborative-whiteboard/actions/workflows/ci.yml/badge.svg)](https://github.com/megha445/collaborative-whiteboard/actions/workflows/ci.yml)
 
 ---
 

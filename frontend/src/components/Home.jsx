@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/useAuth';
+import { useSocket } from '../context/useSocket';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import RoomCard from './RoomCard';
@@ -20,13 +20,12 @@ const Home = () => {
 
   useEffect(() => {
     fetchRooms();
-    if (socket) {
-      socket.connect();
-    }
   }, []);
 
   useEffect(() => {
     if (socket) {
+      socket.connect();
+
       socket.on('room-created', (room) => {
         console.log('New room created:', room);
         setRooms((prev) => {
@@ -95,7 +94,7 @@ const Home = () => {
     try {
       const response = await api.get('/rooms');
       setRooms(response.data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch rooms');
     }
   };

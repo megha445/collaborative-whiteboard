@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/useAuth';
+import { useSocket } from '../context/useSocket';
 import Toolbar from './Toolbar';
 import OnlineUsers from './OnlineUsers';
 import { toast } from 'react-toastify';
